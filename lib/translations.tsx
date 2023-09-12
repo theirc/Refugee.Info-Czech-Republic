@@ -8,8 +8,8 @@ import { FooterStrings } from '@ircsignpost/signpost-base/dist/src/footer';
 import { HeaderBannerStrings } from '@ircsignpost/signpost-base/dist/src/header-banner';
 import { HomePageStrings } from '@ircsignpost/signpost-base/dist/src/home-page';
 import { CardsListStrings } from '@ircsignpost/signpost-base/dist/src/home-page-cards-list';
-import { SearchBarStrings } from '@ircsignpost/signpost-base/dist/src/search-bar';
 import { PopupStrings } from '@ircsignpost/signpost-base/dist/src/map';
+import { SearchBarStrings } from '@ircsignpost/signpost-base/dist/src/search-bar';
 import { SearchResultsPageStrings } from '@ircsignpost/signpost-base/dist/src/search-results-page';
 import { SearchResultsStrings } from '@ircsignpost/signpost-base/dist/src/search-results-page-content';
 import { SectionStrings } from '@ircsignpost/signpost-base/dist/src/section-page';
@@ -413,4 +413,3 @@ export function populateServicePageStrings(dynamicContent: {
     footerStrings: populateFooterStrings(dynamicContent),
   };
 }
-

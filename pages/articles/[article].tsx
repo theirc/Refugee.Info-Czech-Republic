@@ -228,7 +228,7 @@ export const getStaticProps: GetStaticProps = async ({
   );
   const menuOverlayItems = getMenuItems(
     populateMenuOverlayStrings(dynamicContent),
-    categories,
+    categories
   );
 
   const footerLinks = getFooterItems(
