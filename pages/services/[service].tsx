@@ -1,29 +1,38 @@
+import { Auth, Directus, TypeMap } from '@directus/sdk';
+import { extractMetaTags } from '@ircsignpost/signpost-base/dist/src/article-content';
+import { getErrorResponseProps } from '@ircsignpost/signpost-base/dist/src/article-page';
 import CookieBanner from '@ircsignpost/signpost-base/dist/src/cookie-banner';
+import {
+  DirectusArticle,
+  getDirectusArticle,
+  getDirectusArticles,
+} from '@ircsignpost/signpost-base/dist/src/directus';
+import Footer from '@ircsignpost/signpost-base/dist/src/footer';
 import { MenuOverlayItem } from '@ircsignpost/signpost-base/dist/src/menu-overlay';
-import SectionPage, {
-  SectionStrings,
-} from '@ircsignpost/signpost-base/dist/src/section-page';
-import { getSectionRedirectServerSideProps } from '@ircsignpost/signpost-base/dist/src/section-page';
-import { MenuItem } from '@ircsignpost/signpost-base/dist/src/select-menu';
+import { createDefaultSearchBarProps } from '@ircsignpost/signpost-base/dist/src/search-bar';
+import { ServicePageStrings } from '@ircsignpost/signpost-base/dist/src/service-page';
+import ServicePage, {
+  MountService,
+} from '@ircsignpost/signpost-base/dist/src/service-page';
 import {
-  Article,
-  Section,
-} from '@ircsignpost/signpost-base/dist/src/topic-with-articles';
-import {
-  getArticlesForSection,
+  CategoryWithSections,
+  ZendeskCategory,
+  getCategories,
   getCategoriesWithSections,
-  getSection,
-  getSections,
   getTranslationsFromDynamicContent,
 } from '@ircsignpost/signpost-base/dist/src/zendesk';
 import { GetStaticProps } from 'next';
 import getConfig from 'next/config';
-import { useEffect, useState } from 'react';
+import { useRouter } from 'next/router';
+import React from 'react';
 
 import {
   CATEGORIES_TO_HIDE,
+  CATEGORY_ICON_NAMES,
+  DIRECTUS_AUTH_TOKEN,
+  DIRECTUS_COUNTRY_ID,
+  DIRECTUS_INSTANCE,
   GOOGLE_ANALYTICS_IDS,
-  MENU_CATEGORIES_TO_HIDE,
   REVALIDATION_TIMEOUT_SECONDS,
   SEARCH_BAR_INDEX,
   SECTION_ICON_NAMES,
@@ -33,6 +42,7 @@ import {
 } from '../../lib/constants';
 import {
   LOCALES,
+  LOCALE_CODES_TO_CANONICAL_LOCALE_CODES,
   Locale,
   getLocaleFromCode,
   getZendeskLocaleId,
@@ -41,279 +51,275 @@ import { getHeaderLogoProps } from '../../lib/logo';
 import { getFooterItems, getMenuItems } from '../../lib/menu';
 import {
   COMMON_DYNAMIC_CONTENT_PLACEHOLDERS,
-  SECTION_PLACEHOLDERS,
-  getLastUpdatedLabel,
-  populateFilterSelectStrings,
+  ERROR_DYNAMIC_CONTENT_PLACEHOLDERS,
+  generateArticleErrorProps,
   populateMenuOverlayStrings,
-  populateSectionStrings,
+  populateServicePageStrings,
 } from '../../lib/translations';
-import { getZendeskUrl } from '../../lib/url';
+import { getSiteUrl, getZendeskMappedUrl, getZendeskUrl } from '../../lib/url';
 
-interface CategoryProps {
-  currentLocale: Locale;
+interface ServiceProps {
   pageTitle: string;
-  sectionId: number;
-  sectionItems: MenuItem[];
-  section: Section;
-  // A list of |MenuOverlayItem|s to be displayed in the header and side menu.
+  serviceId: number;
+  pageUnderConstruction?: boolean;
+  siteUrl: string;
+  preview: boolean;
+  metaTagAttributes: object[];
+  lastEditedValue: string;
+  locale: Locale;
+  strings: ServicePageStrings;
   menuOverlayItems: MenuOverlayItem[];
-  strings: SectionStrings;
-  selectFilterLabel: string;
-  filterItems: MenuItem[];
   footerLinks?: MenuOverlayItem[];
+  service: DirectusArticle;
 }
 
-export default function Category({
-  currentLocale,
+export default function Service({
   pageTitle,
-  sectionId,
-  sectionItems,
-  section,
-  menuOverlayItems,
+  serviceId,
+  pageUnderConstruction,
+  siteUrl,
+  preview,
+  metaTagAttributes,
+  lastEditedValue,
+  locale,
   strings,
-  selectFilterLabel,
-  filterItems,
+  menuOverlayItems,
   footerLinks,
-}: CategoryProps) {
-  const [sectionDisplayed, setSectionDisplayed] = useState<Section>(section);
+  service,
+}: ServiceProps) {
+  const router = useRouter();
   const { publicRuntimeConfig } = getConfig();
 
-  const handleFilterSectionChange = async (val: string) => {
-    const dynamicContent = await getTranslationsFromDynamicContent(
-      getZendeskLocaleId(currentLocale),
-      COMMON_DYNAMIC_CONTENT_PLACEHOLDERS.concat(SECTION_PLACEHOLDERS),
-      getZendeskUrl(),
-      { Authorization: 'Bearer ' + process.env.NEXT_PUBLIC_ZENDESK_OAUTH_TOKEN }
-    );
-
-    const articles: Article[] = (
-      await getArticlesForSection(
-        currentLocale,
-        sectionId,
-        getZendeskUrl(),
-        val
-      )
-    ).map((article) => {
-      return {
-        id: article.id,
-        title: article.title,
-        lastEdit: {
-          label: getLastUpdatedLabel(dynamicContent),
-          value: article.updated_at,
-          locale: currentLocale,
-        },
-      };
-    });
-
-    const section: Section = {
-      id: sectionDisplayed.id,
-      name: sectionDisplayed.name,
-      description: sectionDisplayed.description,
-      articles,
-    };
-
-    setSectionDisplayed(section);
-  };
-
-  useEffect(() => {
-    setSectionDisplayed(section);
-  }, [section]);
-
   return (
-    <SectionPage
-      currentLocale={currentLocale}
-      locales={LOCALES}
+    <ServicePage
       pageTitle={pageTitle}
-      sectionId={sectionId}
-      sectionItems={sectionItems}
-      section={sectionDisplayed}
-      menuOverlayItems={menuOverlayItems}
-      headerLogoProps={getHeaderLogoProps(currentLocale)}
-      searchBarIndex={SEARCH_BAR_INDEX}
-      cookieBanner={
-        <CookieBanner
-          strings={strings.cookieBannerStrings}
-          googleAnalyticsIds={GOOGLE_ANALYTICS_IDS}
-        />
-      }
-      strings={strings}
-      selectFilterLabel={selectFilterLabel}
-      filterSelect={true}
-      filterItems={filterItems}
-      onSelectFilterChange={handleFilterSectionChange}
-      footerLinks={footerLinks}
-      signpostVersion={publicRuntimeConfig?.version}
-    />
+      serviceId={serviceId}
+      canonicalLocales={LOCALE_CODES_TO_CANONICAL_LOCALE_CODES}
+      pageUnderConstruction={pageUnderConstruction}
+      siteUrl={siteUrl}
+      preview={preview}
+      errorProps={strings.serviceErrorStrings}
+      metaTagAttributes={metaTagAttributes}
+      layoutWithMenuProps={{
+        headerProps: {
+          currentLocale: locale,
+          locales: LOCALES,
+          logoProps: getHeaderLogoProps(locale),
+          searchBarProps: createDefaultSearchBarProps(
+            strings.searchBarStrings,
+            SEARCH_BAR_INDEX,
+            locale,
+            router
+          ),
+        },
+        menuOverlayItems: menuOverlayItems,
+        cookieBanner: (
+          <CookieBanner
+            strings={strings.cookieBannerStrings}
+            googleAnalyticsIds={GOOGLE_ANALYTICS_IDS}
+          />
+        ),
+        footerComponent: (
+          <Footer
+            currentLocale={locale}
+            locales={LOCALES}
+            strings={strings.footerStrings}
+            links={footerLinks}
+            signpostVersion={publicRuntimeConfig?.version}
+          />
+        ),
+        layoutDirection: locale.direction,
+        children: [],
+      }}
+    >
+      <MountService
+        serviceProps={{
+          service,
+          lastEdit: {
+            label: strings.lastUpdatedLabel,
+            value: lastEditedValue,
+            locale: locale,
+          },
+          disableShareButton: true,
+          strings: strings.serviceContentStrings,
+        }}
+      />
+    </ServicePage>
   );
 }
 
 async function getStaticParams() {
-  const sections = await Promise.all(
-    Object.values(LOCALES).map(
-      async (locale) => await getSections(locale, getZendeskUrl())
-    )
+  const directus: any = new Directus(DIRECTUS_INSTANCE);
+  await directus.auth.static(DIRECTUS_AUTH_TOKEN);
+  const services = await getDirectusArticles(DIRECTUS_COUNTRY_ID, directus);
+
+  // const services = await getServices(directus)
+
+  const allowedLanguageCodes = Object.values(LOCALES).map(
+    (locale) => locale.directus
   );
 
-  return sections.flat().map((section) => {
-    return {
-      section: section.id.toString(),
-      locale: section.locale,
-    };
+  const servicesFiltered = services?.filter((service) => {
+    const translation = service?.translations?.find((translation) =>
+      allowedLanguageCodes.includes(translation.languages_id.code)
+    );
+    return translation;
   });
+
+  return servicesFiltered.flatMap((service) =>
+    service?.translations?.map((translation) => {
+      const locale = Object.values(LOCALES).find(
+        (x) => x.directus === translation.languages_id.code
+      );
+
+      return {
+        service: service.id.toString(),
+        locale: locale?.url,
+      };
+    })
+  );
 }
 
 export async function getStaticPaths() {
-  if (!USE_CAT_SEC_ART_CONTENT_STRUCTURE) {
-    // Section page is not statically prerendered in this type of content structure.
-    return {
-      paths: [],
-      fallback: 'blocking',
-    };
-  }
-
-  const sectionParams = await getStaticParams();
+  const articleParams = await getStaticParams();
 
   return {
-    paths: sectionParams.map(({ section, locale }) => {
+    paths: articleParams.map(({ service, locale }) => {
       return {
-        params: { section },
+        params: { service },
         locale,
       };
     }),
     fallback: 'blocking',
+    // fallback: false //Temporary patch to avoid some page errors! check later
   };
 }
 
-function getStringPath(section: string, locale: string): string {
-  return `/${locale}/sections/${section}`;
+function getStringPath(service: string, locale: string = 'en-us'): string {
+  return `/${locale}/services/${service}`;
 }
 
 export async function getStringPaths(): Promise<string[]> {
-  if (!USE_CAT_SEC_ART_CONTENT_STRUCTURE) {
-    // Section page does not exist in this type of content structure.
-    return [];
-  }
   const params = await getStaticParams();
-  return params.map((param) => getStringPath(param.section, param.locale));
+  return params.map((param) => getStringPath(param.service, param.locale));
 }
 
-export const getStaticProps: GetStaticProps = async ({ params, locale }) => {
-  if (!locale) {
-    throw new Error(
-      `Failed to get static props for a section (id: ${params?.section}): missing locale.`
-    );
-  }
-
-  if (!params?.section) return { notFound: true };
-
-  const currentLocale = getLocaleFromCode(locale);
-
-  if (!USE_CAT_SEC_ART_CONTENT_STRUCTURE) {
-    // For this type of structure section page redirects to the corresponding category page.
-    return getSectionRedirectServerSideProps(
-      currentLocale,
-      Number(params.section),
-      getZendeskUrl()
-    );
-  }
-
-  const zendeskSection = await getSection(
-    currentLocale,
-    Number(params.section),
-    getZendeskUrl()
-  );
-  if (!zendeskSection) return { notFound: true };
-
-  const dynamicContent = await getTranslationsFromDynamicContent(
+export const getStaticProps: GetStaticProps = (async ({
+  params,
+  locale,
+  preview,
+}) => {
+  const currentLocale = getLocaleFromCode(locale ?? '');
+  let dynamicContent = await getTranslationsFromDynamicContent(
     getZendeskLocaleId(currentLocale),
-    COMMON_DYNAMIC_CONTENT_PLACEHOLDERS.concat(SECTION_PLACEHOLDERS),
+    [
+      ...COMMON_DYNAMIC_CONTENT_PLACEHOLDERS,
+      ...ERROR_DYNAMIC_CONTENT_PLACEHOLDERS,
+    ],
     getZendeskUrl(),
     ZENDESK_AUTH_HEADER
   );
-  const strings: SectionStrings = populateSectionStrings(dynamicContent);
 
-  const articles: Article[] = (
-    await getArticlesForSection(
+  let categories: ZendeskCategory[] | CategoryWithSections[];
+  if (USE_CAT_SEC_ART_CONTENT_STRUCTURE) {
+    categories = await getCategoriesWithSections(
       currentLocale,
-      Number(params?.section),
-      getZendeskUrl()
-    )
-  ).map((article) => {
-    return {
-      id: article.id,
-      title: article.title,
-      lastEdit: {
-        label: getLastUpdatedLabel(dynamicContent),
-        value: article.edited_at,
-        locale: currentLocale,
-      },
-    };
-  });
-
-  const section: Section = {
-    id: zendeskSection.id,
-    name: zendeskSection.name,
-    description: zendeskSection.description,
-    articles,
-  };
-
-  const categories = await getCategoriesWithSections(
-    currentLocale,
-    getZendeskUrl(),
-    (c) => !CATEGORIES_TO_HIDE.includes(c.id)
-  );
-  categories.forEach(({ sections }) => {
-    sections.forEach(
-      (s) => (s.icon = SECTION_ICON_NAMES[s.id] || 'help_outline')
+      getZendeskUrl(),
+      (c) => !CATEGORIES_TO_HIDE.includes(c.id)
     );
-  });
-
-  const menuCategories = await getCategoriesWithSections(
-    currentLocale,
-    getZendeskUrl(),
-    (c) => !MENU_CATEGORIES_TO_HIDE.includes(c.id)
-  );
-
-  const sectionItems = categories
-    .flatMap((c) => c.sections)
-    .map((section) => {
-      return {
-        name: section.name,
-        value: section.id,
-        iconName: section.icon,
-        link: '/sections/' + section.id.toString(),
-      };
+    categories.forEach(({ sections }) => {
+      sections.forEach(
+        (s) => (s.icon = SECTION_ICON_NAMES[s.id] || 'help_outline')
+      );
     });
+  } else {
+    categories = await getCategories(currentLocale, getZendeskUrl());
+    categories = categories.filter((c) => !CATEGORIES_TO_HIDE.includes(c.id));
+    categories.forEach(
+      (c) => (c.icon = CATEGORY_ICON_NAMES[c.id] || 'help_outline')
+    );
+  }
 
   const menuOverlayItems = getMenuItems(
     populateMenuOverlayStrings(dynamicContent),
-    menuCategories
+    categories
   );
+
+  const strings = populateServicePageStrings(dynamicContent);
 
   const footerLinks = getFooterItems(
     populateMenuOverlayStrings(dynamicContent),
-    menuCategories
+    categories
   );
 
-  const filterSelectStrings = populateFilterSelectStrings(dynamicContent);
+  const directus: any = new Directus(DIRECTUS_INSTANCE);
+  await directus.auth.static(DIRECTUS_AUTH_TOKEN);
 
-  const filterItems: MenuItem[] = [
-    { name: filterSelectStrings.mostRecent, value: 'updated_at' },
-  ];
+  const service = await getDirectusArticle(Number(params?.service), directus);
+
+  const serviceTranslated = service.translations.filter(
+    (x) => x.languages_id.code === currentLocale.directus
+  );
+
+  service.translations = serviceTranslated;
+
+  // If article does not exist, return an error.
+  if (!service || !service.translations.length) {
+    const errorProps = await getErrorResponseProps(
+      Number(params?.article),
+      currentLocale,
+      preview ?? false,
+      LOCALES,
+      {
+        url: getZendeskUrl(),
+        mappedUrl: getZendeskMappedUrl(),
+        authHeader: ZENDESK_AUTH_HEADER,
+      }
+    );
+
+    const subtitle = generateArticleErrorProps(dynamicContent).subtitle ?? '';
+    return errorProps.notFound
+      ? // When the error is notFound, router automatically redirects
+        // to 404 page which has its own logic for fetching props.
+        errorProps
+      : // For other error types we have custom error handling logic inside
+        // ArticlePage component, so we pass ArticlePage's and error props.
+        {
+          props: {
+            ...errorProps,
+            pageTitle: `${subtitle} - ${SITE_TITLE}`,
+            strings,
+            menuOverlayItems,
+            siteUrl: getSiteUrl(),
+            articleId: Number(params?.article),
+            locale: currentLocale,
+            preview: preview ?? false,
+            metaTagAttributes: [],
+          },
+        };
+  }
+
+  service.description = serviceTranslated[0].description;
+  service.name = serviceTranslated[0].name;
+
+  const [metaTagAttributes, content] = serviceTranslated[0].description
+    ? extractMetaTags(serviceTranslated[0].description)
+    : [[], serviceTranslated[0].description];
 
   return {
     props: {
-      currentLocale,
-      pageTitle: SITE_TITLE,
-      sectionId: Number(params.section),
-      sectionItems,
-      section,
-      menuOverlayItems,
+      pageTitle: `${serviceTranslated[0].name} - ${SITE_TITLE}`,
+      serviceId: service.id,
+      siteUrl: getSiteUrl(),
+      preview: preview ?? false,
+      metaTagAttributes,
+      lastEditedValue: service.date_updated,
+      locale: currentLocale,
       strings,
-      selectFilterLabel: filterSelectStrings.filterLabel,
-      filterItems,
+      menuOverlayItems,
       footerLinks,
+      service,
     },
     revalidate: REVALIDATION_TIMEOUT_SECONDS,
   };
-};
+}) as any;
