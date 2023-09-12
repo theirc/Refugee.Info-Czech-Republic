@@ -42,33 +42,14 @@ export function getFooterItems(
 
 export function getMenuItems(
   strings: CustomMenuOverlayStrings,
-  categories: ZendeskCategory[] | CategoryWithSections[],
-  includeAbout: boolean
+  categories: ZendeskCategory[] | CategoryWithSections[]
 ): MenuOverlayItem[] {
   let items: MenuOverlayItem[] = [];
   items.push({ key: 'home', label: strings.home, href: '/' });
-  items.push({
-    key: 'Feedback Survey',
-    label: strings.feedback_title,
-    href: strings.feedback,
-  });
   if (USE_CAT_SEC_ART_CONTENT_STRUCTURE) {
     addMenuItemsCategories(items, categories as CategoryWithSections[]);
   } else {
     addMenuItemsInformation(items, strings, categories as ZendeskCategory[]);
-  }
-  items.push({
-    key: 'services',
-    label: strings.services,
-    href: '/#service-map',
-  });
-
-  if (includeAbout) {
-    items.push({
-      key: 'about',
-      label: strings.about,
-      href: `/articles/${ABOUT_US_ARTICLE_ID}`,
-    });
   }
   return items;
 }
