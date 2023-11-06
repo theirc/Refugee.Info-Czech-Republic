@@ -51,6 +51,11 @@ export function getMenuItems(
   } else {
     addMenuItemsInformation(items, strings, categories as ZendeskCategory[]);
   }
+  items.push({
+    key: 'services',
+    label: strings.services, // Make sure this string is defined in your strings object
+    href: '/#service-map',
+  });
   return items;
 }
 
