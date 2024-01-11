@@ -20,7 +20,6 @@ export interface SocialMediaLinks {
   telegramLink: SocialMediaLink;
   tiktokLink: SocialMediaLink;
   instagramLink: SocialMediaLink;
-  telephoneLink: SocialMediaLink;
 }
 
 /**
@@ -51,10 +50,6 @@ export function getSocialMediaProps(
     {
       ...socialMediaLinks.instagramLink,
       image: instagramImage,
-    },
-    {
-      ...socialMediaLinks.telephoneLink,
-      image: telephoneImage,
     },
   ];
 }
