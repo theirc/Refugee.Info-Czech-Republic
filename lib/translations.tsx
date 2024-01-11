@@ -159,10 +159,6 @@ export function populateSocialMediaLinks(dynamicContent: {
       title: dynamicContent['default_banner_instagram_title'],
       href: dynamicContent['ri_czechia_instagram_link'],
     },
-    telephoneLink: {
-      title: dynamicContent['default_banner_telephone_title'],
-      href: dynamicContent['ri_czechia_telephone_link'],
-    },
   };
 }
 
