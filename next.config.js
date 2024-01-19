@@ -23,6 +23,18 @@ const nextConfig = {
       },
     ];
   },
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'refugeeinfoczechia.zendesk.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'directus-irc.azurewebsites.net',
+      },
+    ],
+  },
 
   publicRuntimeConfig: {
     version: pack.dependencies['@ircsignpost/signpost-base'],
