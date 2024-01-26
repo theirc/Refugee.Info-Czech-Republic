@@ -37,6 +37,11 @@ export function getFooterItems(
     label: strings.about,
     href: `/articles/${ABOUT_US_ARTICLE_ID}`,
   });
+  items.push({
+    key: 'Feedback Survey',
+    label: strings.feedback_title, // Make sure this string is defined in your strings object
+    href: 'strings.feedback',
+  });
   return items;
 }
 
