@@ -40,7 +40,7 @@ export function getFooterItems(
   items.push({
     key: 'Feedback Survey',
     label: strings.feedback_title, // Make sure this string is defined in your strings object
-    href: 'strings.feedback',
+    href: strings.feedback,
   });
   return items;
 }
