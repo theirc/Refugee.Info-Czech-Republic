@@ -61,6 +61,11 @@ export function getMenuItems(
     label: strings.services, // Make sure this string is defined in your strings object
     href: '/#service-map',
   });
+  items.push({
+    key: 'Feedback Survey',
+    label: strings.feedback_title, // Make sure this string is defined in your strings object
+    href: 'strings.feedback',
+  });
   return items;
 }
 
