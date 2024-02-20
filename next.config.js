@@ -35,7 +35,6 @@ const nextConfig = {
       },
     ],
   },
-
   publicRuntimeConfig: {
     version: pack.dependencies['@ircsignpost/signpost-base'],
   },
