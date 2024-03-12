@@ -19,3 +19,7 @@ a {
 * {
   box-sizing: border-box;
 }
+
+.provider-name {
+  color: #6c757d;
+}
